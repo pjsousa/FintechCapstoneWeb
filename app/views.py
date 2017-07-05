@@ -44,7 +44,15 @@ def prices(ticker):
 
 @app.route('/predict/<ticker>', methods=['GET'])
 def predict(ticker):
-  return jsonify({'predict': []})
+  try:
+    _r = pd.read_csv("app/data/{}.csv".format(ticker))
+    _r = _r.where((pd.notnull(_r)), None).iloc[:,:5]
+    _r.columns = ["Date","RETURN_1", "RETURN_5", "RETURN_60", "RETURN_200"]
+  except IOError:
+    _r = pd.DataFrame()
+
+  return jsonify({'columns': _r.columns.tolist()
+                  , 'data': _r.values.tolist()})
 
 
 

@@ -15,25 +15,29 @@
 		<script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js'></script>
 		<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/css/selectize.min.css" />
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/css/selectize.bootstrap3.min.css" />
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/css/selectize.min.css" >
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/css/selectize.bootstrap3.min.css" >
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/selectize.js/0.12.4/js/standalone/selectize.min.js"></script>
 
 		
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.9.1/d3.min.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/3.14.1/math.min.js"></script>
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.min.js"></script>
+		
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.32.0/handsontable.full.min.css" >
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.32.0/handsontable.full.min.js"></script>
 
+		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
 
-		<link rel="stylesheet" href="/static/css/style.css" />
+		<link rel="stylesheet" href="/static/css/style.css" >
 		<script src="/static/js/client-app.js"></script>
 	</head>
 	<body>
 	
-		<div id="app" class="container">
+		<div id="app" class="container-fluid">
 		<!-- ko with: capstoneApp-->
 			<div class="row">
-				<div class="col-xs-12">
+				<div class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
 					<div class="panel panel-default">
 						<div class="panel-body">
 							<select id="ticker-picker" class="form-control tickers" placeholder="Select a company's ticker">
@@ -46,19 +50,57 @@
 				</div>
 			</div>
 			<div class="row">
-				<div class="col-xs-12">
+				<!-- LEFT PRICES GRID -->
+				<div class="hidden-xs hidden-sm hidden-md col-lg-3">
 					<div class="panel">
 						<div class="panel-heading">
-							<div class="btn-group" role="group">
-								<button type="button" class="btn btn-default">All</button>
-								<button type="button" class="btn btn-default">1Y</button>
-								<button type="button" class="btn btn-default">3M</button>
-								<button type="button" class="btn btn-default">1M</button>
-								<button type="button" class="btn btn-default">5D</button>
+							<div class="btn-group" role="group" style="visibility: hidden">
+									<button type="button" class="btn btn-sm" >.</button>
 							</div>
 						</div>
-						<div id="prices-plot" class="panel-body" style="height: 300px;">
-							
+						<div class="panel-body">
+							<div id="prices-grid" class="row" style="height: 300px; overflow: auto;	">
+								
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- MIDDLE PLOTTING -->
+				<div class="col-xs-12 col-sm-10 col-sm-offset-1 col-lg-6 col-lg-offset-0">
+					<div class="panel">
+						<div class="panel-heading">
+							<div class="col-xs-6">
+								<div class="btn-group" role="group">
+									<button type="button" class="btn btn-sm" data-bind="click: capstone.events.timeperiod_changed.bind(null, capstone.TIMEPERIODS['ALL']), css: {'btn-primary': ui.isActiveTimePeriod_All(), 'btn-default': !ui.isActiveTimePeriod_All()}">All</button>
+									<button type="button" class="btn btn-sm" data-bind="click: capstone.events.timeperiod_changed.bind(null, capstone.TIMEPERIODS['1Y']), css: {'btn-primary': ui.isActiveTimePeriod_1Y(), 'btn-default': !ui.isActiveTimePeriod_1Y()}">1Y</button>
+									<button type="button" class="btn btn-sm" data-bind="click: capstone.events.timeperiod_changed.bind(null, capstone.TIMEPERIODS['3M']), css: {'btn-primary': ui.isActiveTimePeriod_3M(), 'btn-default': !ui.isActiveTimePeriod_3M()}">3M</button>
+									<button type="button" class="btn btn-sm" data-bind="click: capstone.events.timeperiod_changed.bind(null, capstone.TIMEPERIODS['1M']), css: {'btn-primary': ui.isActiveTimePeriod_1M(), 'btn-default': !ui.isActiveTimePeriod_1M()}">1M</button>
+									<button type="button" class="btn btn-sm" data-bind="click: capstone.events.timeperiod_changed.bind(null, capstone.TIMEPERIODS['5D']), css: {'btn-primary': ui.isActiveTimePeriod_5D(), 'btn-default': !ui.isActiveTimePeriod_5D()}">5D</button>
+								</div>
+							</div>
+						</div>
+						<div class="panel-body">
+							<div id="prices-plot" class="row" style="height: 300px;">
+								
+							</div>
+							<div id="volume-plot" class="row" style="height: 100px;">
+								
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- RIGT PREDICTIONS GRID -->
+				<div class="hidden-xs hidden-sm hidden-md col-lg-3">
+					<div class="panel">
+						<div class="panel-heading">
+							<div class="btn-group" role="group" style="visibility: hidden">
+									<button type="button" class="btn btn-sm" >.</button>
+							</div>
+						</div>
+						<div class="panel-body">
+							<div id="predictions-grid" class="row" style="height: 300px; overflow: auto;	">
+								
+							</div>
 						</div>
 					</div>
 				</div>
