@@ -14,22 +14,29 @@
 	};
 	capstone.TIMEPERIODS = TIMEPERIODS;
 
+	RETURNS = [1, 30, 60];
+	capstone.RETURNS = RETURNS;
+
 	/**
 	*	EVENTS
 	*/
 	capstone.events.tickers_received = function(response){
+		
 		capstoneApp.storeTickersList(response);
 	};
 
 	capstone.events.prices_received = function(response){
+	
 		capstoneApp.storePrices(response);
 	};
 
 	capstone.events.predictions_received = function(response){
+	
 		capstoneApp.storePredictions(response);
 	};
 
 	capstone.events.syncError = function(method, xhr, errorType, error ){
+	
 		alert(method + " - " + errorType + " - " + error);
 	};
 
@@ -39,7 +46,7 @@
 		}
 		else{
 			capstoneApp.obs_data.selected_ticker(newValue)
-			capstoneApp.refreshPricePlot()
+			capstoneApp.refreshData()
 		}
 	};
 
@@ -51,6 +58,11 @@
 
 		evt.target.blur();
 		evt.preventDefault();
+	};
+
+	capstone.events.forecastDate_changed = function(capstoneApp, evt){
+		console.log("Hey")
+		capstoneApp.selectDate(evt.target.value);
 	};
 
 	/**
@@ -79,7 +91,7 @@
 		$.ajax(_req)
 			.done(capstone.events.prices_received)
 			.fail(capstone.events.syncError.bind(null, "capstone.sync.prices_fetch"))
-	}
+	};
 
 	capstone.sync.predictions_fetch = function(symbol){
 		var _req = {
@@ -91,7 +103,7 @@
 		$.ajax(_req)
 			.done(capstone.events.predictions_received)
 			.fail(capstone.events.syncError.bind(null, "capstone.sync.predictions_fetch"))
-	}
+	};
 
 	/**
 	*	UI
@@ -102,19 +114,108 @@
 		return _v == timeperiod;
 	};
 
+	capstone.ui.computeGridLabel = function(capstoneApp, isforecast, return_time){
+		var _isShowPrices = capstoneApp.obs_data.isShowPrices();
+		var _activeDate = capstoneApp.obs_data.active_date_idx();
+		var _hasForecast = capstoneApp.ui.activeDateHasForecast();
+		var _return_col, _price_col;
+		var _r;
+		var _value;
+		
+		if(_hasForecast){
+			if(isforecast){
+				_return_col = "RETURN_" + return_time;
+				_price_col= "Close_" + return_time;
+
+				_value = capstone.utils.predictionColumn((_isShowPrices ? _price_col : _return_col), false)[_activeDate]
+
+				if(_isShowPrices){
+					_r = numeral(_value).format("0.00");
+				}
+			}
+			else{
+				var _date_col = "forecastDate_" + return_time;
+				var _date_computed_val = capstoneApp.ui[_date_col]();
+				var _final_date = capstone.utils.pricesColumn("Date", false).indexOf(_date_computed_val);
+				
+				if (_final_date == -1 ){
+					_r = "No Forecast";
+				}
+				else{
+					_r = capstone.utils.pricesColumn("Close", false)[_final_date]
+				}
+			}
+		}
+		else{
+			_r = "No Forecast";
+		}
+
+		//console.log(isforecast, return_time, _value, _r);
+
+		return _r;
+	};
+
+	capstone.ui.computeActiveDateLabel = function(capstoneApp){
+		var _activeDate = capstoneApp.obs_data.active_date();
+		var _r;
+
+		if (_activeDate){
+			_r = _activeDate;
+		}
+		else{
+			_r = "No date selected";
+		}
+
+		return _r;
+	};
+
+	capstone.ui.computeForecastDate = function(capstoneApp, return_time){
+		var _activeDate = capstoneApp.obs_data.active_date_idx();
+		var _hasForecast = capstoneApp.ui.activeDateHasForecast();
+		var _r;
+
+
+		if (_hasForecast){
+			switch(return_time){
+				case 1:
+					_r = capstone.utils.predictionColumn("Date_1", false)[_activeDate];
+					break;
+				case 30:
+					_r = capstone.utils.predictionColumn("Date_30", false)[_activeDate];
+					break;
+				case 60:
+					_r = capstone.utils.predictionColumn("Date_60", false)[_activeDate];
+					break;
+
+			}
+		}
+		else{
+			_r = "No Forecast";
+		}
+
+		return _r;
+	};
+
+	capstone.ui.computeActiveDateHasForecast = function(capstoneApp){
+		var _activeDate = capstoneApp.obs_data.active_date();
+		return capstoneApp.obs_data.active_date_idx() > -1;
+	};
 
 	/**
 	*	UTILS
 	*/
 	capstone.utils.tickerTitle = function(key){
+		
 		return capstoneApp.__raw__.tickers.data[key].slice(0,2).join(" - ")
 	};
 
 	capstone.utils.tickerSymbol = function(key){
+		
 		return capstoneApp.__raw__.tickers.data[key][0];
 	};
 
 	capstone.utils.tickerName = function(key){
+		
 		return capstoneApp.__raw__.tickers.data[key][1];
 	};
 
@@ -228,8 +329,13 @@
 			ticker_arr: ko.observable(undefined)
 			,selected_ticker: ko.observable(undefined)
 			,selected_timewindow: ko.observable(undefined)
-			,selected_timeperiod: ko.observable(TIMEPERIODS["5D"])
+			,selected_timeperiod: ko.observable(TIMEPERIODS["1M"])
+			,isShowPrices: ko.observable(true)
+			,active_date: ko.observable(undefined)
+			,active_date_idx: ko.observable(undefined)
 		};
+
+		this.ui.activeDateHasForecast = ko.computed(capstone.ui.computeActiveDateHasForecast.bind(null, this));
 
 		this.ui.isActiveTimePeriod_All = ko.computed(capstone.ui.computeIsActiveTimePeriod.bind(null, this, TIMEPERIODS["ALL"]));
 		this.ui.isActiveTimePeriod_1Y = ko.computed(capstone.ui.computeIsActiveTimePeriod.bind(null, this, TIMEPERIODS["1Y"]));
@@ -237,10 +343,23 @@
 		this.ui.isActiveTimePeriod_1M = ko.computed(capstone.ui.computeIsActiveTimePeriod.bind(null, this, TIMEPERIODS["1M"]));
 		this.ui.isActiveTimePeriod_5D = ko.computed(capstone.ui.computeIsActiveTimePeriod.bind(null, this, TIMEPERIODS["5D"]));
 
+		this.ui.forecastDate = ko.computed(capstone.ui.computeActiveDateLabel.bind(null, this));
+		this.ui.forecastDate_1 = ko.computed(capstone.ui.computeForecastDate.bind(null, this, 1));
+		this.ui.forecastDate_30 = ko.computed(capstone.ui.computeForecastDate.bind(null, this, 30));
+		this.ui.forecastDate_60 = ko.computed(capstone.ui.computeForecastDate.bind(null, this, 60));
+
+		this.ui.forecast_1 = ko.computed(capstone.ui.computeGridLabel.bind(null, this, true, 1));
+		this.ui.forecast_30 = ko.computed(capstone.ui.computeGridLabel.bind(null, this, true, 30));
+		this.ui.forecast_60 = ko.computed(capstone.ui.computeGridLabel.bind(null, this, true, 60));
+		this.ui.real_1 = ko.computed(capstone.ui.computeGridLabel.bind(null, this, false, 1));
+		this.ui.real_30 = ko.computed(capstone.ui.computeGridLabel.bind(null, this, false, 30));
+		this.ui.real_60 = ko.computed(capstone.ui.computeGridLabel.bind(null, this, false, 60));
+		
 		this.init();
 	};
 
 	App.prototype.init = function() {
+		
 		capstone.sync.tickers_fetch();
 	};
 
@@ -284,6 +403,9 @@
 
 		_symbol = capstone.utils.tickerSymbol(this.obs_data.selected_ticker());
 		capstone.sync.predictions_fetch(_symbol);
+
+		this.obs_data.active_date(undefined)
+		this.obs_data.active_date_idx(undefined)
 	};
 
 	App.prototype.storePredictions = function(response) {
@@ -317,8 +439,6 @@
 		this.__raw__.predictiondates_1M = this.__raw__.predictiondates_parsed.length - this.__raw__.predictiondates_1M.length;
 		this.__raw__.predictiondates_5D = this.__raw__.predictiondates_parsed.length - this.__raw__.predictiondates_5D.length;
 
-
-
 		this.drawPricePlot();
 		this.drawPriceGrid();
 	};
@@ -329,19 +449,26 @@
 		}
 
 		this.__raw__.selectizeObj = $("#ticker-picker").selectize(_opts);
+		this.__raw__.selectizeObj[0].selectize.clear()
 	};
 
-	App.prototype.refreshPricePlot = function() {
+	App.prototype.refreshData = function() {
 		var _symbol = capstone.utils.tickerSymbol(this.obs_data.selected_ticker());
 		capstone.sync.prices_fetch(_symbol);
 	};
 
 	App.prototype.drawPricePlot = function(){
+		
+		var _parent = $("#prices-plot").get(0).parentNode
+		$("#prices-plot").remove();
+		$("#volume-plot").remove();
+		_parent.innerHTML = '<div id="prices-plot" class="row" style="height: 300px;"></div><div id="volume-plot" class="row" style="height: 100px;"></div>';
+
 		var close_ax = {
 			x: capstone.utils.pricesColumn("Date")
 			,y: capstone.utils.pricesColumn("Close")
 			,type: 'scatter'
-			,name: 'Close'
+			,name: 'Close ($)'
 		};
 
 		var volume_ax = {
@@ -352,22 +479,7 @@
 			,marker: {color: 'rgb(142,124,195)'}
 		};
 
-		var rets_ax = [1, 5, 60, 200]
-			.map(function(itr){
-				var _column = "RETURN_" + itr;
-				var _name = itr + ' Day Return';
-				return {
-					x: capstone.utils.predictionColumn("Date")
-					,y: capstone.utils.predictionColumn(_column)
-					,type: 'scatter'
-					,name: _name
-					, line: {
-						dash: 'dot'
-					}
-				}})
-		 
-
-		var data = [close_ax].concat(rets_ax);
+		var data = [close_ax]
 
 		var layout = {
 			dragmode: null,
@@ -395,17 +507,12 @@
 		Plotly.newPlot('volume-plot', [volume_ax], layout);
 
 
-		// $("#prices-plot").on('plotly_hover', function(evt, plotlyData){
-		// 	if(plotlyData.xvals.length){
-		// 		var _datestr = moment(plotlyData.xvals[0]).format("YYYY-MM-DD");
-		// 		capstoneApp.gotoPrice(_datestr);
-		// 		capstoneApp.gotoPrediction(_datestr);
-		// 	}
-		// })
-		// .on('plotly_unhover', function(evt, plotlyData){
-		//     capstoneApp.gotoPrice(null);
-		// 	capstoneApp.gotoPrediction(null);
-		// });
+		$("#prices-plot").get(0).on('plotly_hover', function(plotlyData){
+			if(plotlyData.xvals.length){
+				var _datestr = plotlyData.points[0].x;
+				capstoneApp.selectDate(_datestr);
+			}
+		});
 	};
 
 	App.prototype.drawPriceGrid = function(){
@@ -459,6 +566,16 @@
 
 		this.__raw__.predictionsGridObj.render();
 	}
+
+	App.prototype.selectDate = function(dateString){
+		console.log("Event date:", dateString);
+		var _idx = capstone.utils.predictionColumn("Date", false).indexOf(dateString);
+		console.log("Date index:", _idx);
+		_idx = _idx > -1 ? _idx : undefined;
+
+		this.obs_data.active_date(dateString);
+		this.obs_data.active_date_idx(_idx);
+	};
 
 	capstone.App = App;
 	window.capstone = capstone;

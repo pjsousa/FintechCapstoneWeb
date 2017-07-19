@@ -1,7 +1,18 @@
 body{
-	background-color: #FDFDFD
+	background-color: #e3e3e3;
 }
 
 .container{
 	
+}
+
+.select-noticker{
+	margin-top: calc(50vh - 3em);
+}
+
+.container-fluid .row:nth-child(1).select-noticker::before{
+	content:"Please select a company below";
+	text-align: center;
+	width: 100vw;
+	font-size: small;
 }

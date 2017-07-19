@@ -1,9 +1,10 @@
 from flask import render_template, flash, redirect, jsonify
 from app import app
-from .forms import LoginForm
+#from .forms import LoginForm
 
 import numpy as np
 import pandas as pd
+
 
 @app.route('/')
 @app.route('/index')
@@ -29,6 +30,7 @@ def index():
 def tickers():
   _r = pd.read_csv("app/data/tickers_nasdaq100.csv")
   _r = _r.where((pd.notnull(_r)), None)
+  _r = _r[_r["Symbol"].isin(["AAPL", "NFLX", "NVDA"])]
   return jsonify({'columns': _r.columns.tolist()
                   , 'data': _r.values.tolist()})
 
@@ -45,12 +47,13 @@ def prices(ticker):
 @app.route('/predict/<ticker>', methods=['GET'])
 def predict(ticker):
   try:
-    _r = pd.read_csv("app/data/{}.csv".format(ticker))
-    _r = _r.where((pd.notnull(_r)), None).iloc[:,:5]
-    _r.columns = ["Date","RETURN_1", "RETURN_5", "RETURN_60", "RETURN_200"]
+    _r = pd.read_csv("app/data/predictions.csv")
+    _r = _r.where((pd.notnull(_r)), None)
+    _r = _r[_r["Ticker"] == ticker]
+    _r.drop('Ticker', axis=1, inplace=True)
+
   except IOError:
     _r = pd.DataFrame()
-
   return jsonify({'columns': _r.columns.tolist()
                   , 'data': _r.values.tolist()})
 

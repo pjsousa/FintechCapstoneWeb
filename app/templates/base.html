@@ -29,6 +29,8 @@
 
 		<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/numeral.js/2.0.6/numeral.min.js"></script>
 
+		<script src="https://use.fontawesome.com/0d40d23629.js"></script>
+
 		<link rel="stylesheet" href="/static/css/style.css" >
 		<script src="/static/js/client-app.js"></script>
 	</head>
@@ -36,11 +38,11 @@
 	
 		<div id="app" class="container-fluid">
 		<!-- ko with: capstoneApp-->
-			<div class="row">
+			<div class="row" data-bind="css: {'select-noticker': obs_data.selected_ticker() === undefined}">
 				<div class="col-xs-12 col-sm-10 col-sm-offset-1 col-md-8 col-md-offset-2 col-lg-6 col-lg-offset-3">
 					<div class="panel panel-default">
 						<div class="panel-body">
-							<select id="ticker-picker" class="form-control tickers" placeholder="Select a company's ticker">
+							<select id="ticker-picker" class="form-control tickers" placeholder="No Company selected">
 							<!-- ko foreach: obs_data.ticker_arr -->
 								<option data-bind="text: capstone.utils.tickerTitle($data), value: $data"></option>
 							<!-- /ko -->
@@ -49,24 +51,10 @@
 					</div>
 				</div>
 			</div>
-			<div class="row">
-				<!-- LEFT PRICES GRID -->
-				<div class="hidden-xs hidden-sm hidden-md col-lg-3">
-					<div class="panel">
-						<div class="panel-heading">
-							<div class="btn-group" role="group" style="visibility: hidden">
-									<button type="button" class="btn btn-sm" >.</button>
-							</div>
-						</div>
-						<div class="panel-body">
-							<div id="prices-grid" class="row" style="height: 300px; overflow: auto;	">
-								
-							</div>
-						</div>
-					</div>
-				</div>
-				<!-- MIDDLE PLOTTING -->
-				<div class="col-xs-12 col-sm-10 col-sm-offset-1 col-lg-6 col-lg-offset-0">
+			<!-- ROW 1 -->
+			<div class="row" data-bind="css: {'hidden': obs_data.selected_ticker() === undefined}">
+				<!-- LEFT PLOTTING -->
+				<div class="hidden-xs hidden-sm col-md-6 col-md-offset-1 col-lg-7 col-lg-offset-1">
 					<div class="panel">
 						<div class="panel-heading">
 							<div class="col-xs-6">
@@ -89,16 +77,77 @@
 						</div>
 					</div>
 				</div>
-				<!-- RIGT PREDICTIONS GRID -->
-				<div class="hidden-xs hidden-sm hidden-md col-lg-3">
+				<!-- RIGTH PREDICTIONS -->
+				<div class="col-xs-12 col-md-4 col-lg-3">
 					<div class="panel">
-						<div class="panel-heading">
-							<div class="btn-group" role="group" style="visibility: hidden">
-									<button type="button" class="btn btn-sm" >.</button>
-							</div>
+						<div class="panel-heading text-center">
+							<h4>Forecast Summary</h6>
 						</div>
 						<div class="panel-body">
-							<div id="predictions-grid" class="row" style="height: 300px; overflow: auto;	">
+							<p class="text-center">Forecasting for:</p>
+							<input class="form-control" type="date" data-bind="value: ui.forecastDate, event:{'change': capstone.events.forecastDate_changed}">
+
+							<p class="text-center">Forecasting for: <span data-bind="text: ui.forecastDate"></span></p>
+
+
+
+							<table class="table">
+								<tr>
+									<th></th>
+									<th>Forecast</th>
+									<th>Real</th>
+								</tr>
+								<tr>
+									<th>1 Day</th>
+									<td data-bind="text: ui.forecast_1" style="font-size: small;"></td>
+									<td data-bind="text: ui.real_1" style="font-size: small;"></td>
+								</tr>
+								<tr>
+									<th>30 Days</th>
+									<td data-bind="text: ui.forecast_30" style="font-size: small;"></td>
+									<td data-bind="text: ui.real_30" style="font-size: small;"></td>
+								</tr>
+								<tr>
+									<th>60 Days</th>
+									<td data-bind="text: ui.forecast_60" style="font-size: small;"></td>
+									<td data-bind="text: ui.real_60" style="font-size: small;"></td>
+								</tr>
+							</table>
+
+							<blockquote class="blockquote-reverse">
+								<p style="font-size: small;">1 Day - <span data-bind="text: ui.forecastDate_1"></span></p>
+								<p style="font-size: small;">30 Day - <span data-bind="text: ui.forecastDate_30"></span></p>
+								<p style="font-size: small;">60 Day - <span data-bind="text: ui.forecastDate_60"></span></p>
+							</blockquote>
+
+						</div>
+						<div class="panel-footer text-right">
+							<a href="https://github.com/pjsousa/FintechCapstone" target="_blank" style="font-size: x-large"><i class="fa fa-github" aria-hidden="true"></i></a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- ROW 2 -->
+			<div class="row hidden-xs hidden-sm hidden-md hidden-lg" data-bind="css: {'hidden': obs_data.selected_ticker() === undefined}">
+				<div class="hidden-xs hidden-sm hidden-md col-lg-6">
+					<div class="panel">
+						<div class="panel-heading text-center">
+							<h4>Prices Data</h4>
+						</div>
+						<div class="panel-body">
+							<div id="prices-grid" class="row" style="height: 300px; width:98%; overflow: auto;">
+								
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="hidden-xs hidden-sm hidden-md col-lg-6">
+					<div class="panel">
+						<div class="panel-heading text-center">
+							<h4>Forecasts Data</h4>
+						</div>
+						<div class="panel-body">
+							<div id="predictions-grid" class="row" style="height: 300px; width:98%; overflow: auto;">
 								
 							</div>
 						</div>
