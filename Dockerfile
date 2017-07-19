@@ -13,4 +13,3 @@ ENTRYPOINT ["python"]
 CMD ["run.py"]
 
 
-"python setup.py egg_info" failed with error code 1 in /tmp/pip-build-prZw5Q/ipython/
