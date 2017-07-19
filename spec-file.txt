@@ -25,5 +25,5 @@ tables==3.3.0
 tempita==0.5.2
 whoosh==2.7.4
 wtforms==2.1
-numpy=1.12.1
-pandas=0.20.1
+numpy==1.12.1
+pandas==0.20.1
