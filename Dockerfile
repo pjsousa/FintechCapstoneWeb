@@ -6,7 +6,7 @@ FROM ubuntu:latest
 MAINTAINER Pedro "pjgs.sousa@gmail.com"
 RUN apt-get update -y
 RUN apt-get install -y python-pip python-dev build-essential 
-RUN pip3 install gitsome
+RUN pip install gitsome
 COPY . /app
 WORKDIR /app
 RUN pip install -r spec-file.txt
